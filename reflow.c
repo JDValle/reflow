@@ -6,12 +6,14 @@
 # include "timer.h"
 # include "menu.h"
 # include "heater.h"
+# include "pid.h"
 
 ////////////////////////////////////////////////////////////////////////
 
-void lowrestimer_handler ()
+void timer_handler ()
 {
-  menu_update () ; 
+	heater_update ();
+	menu_update () ; 
 }
 
 int main(void) __attribute__((noreturn));
@@ -20,11 +22,13 @@ int main (void)
 	cli ();
 	clock_prescale_set (0);
 	timer_init ();
-	lowrestimer_init ();
 	sei();
 
   	heater_init();
 	menu_init ();
+
+	SetBit ( DDRD , PD3 ) ;
+	SetBit ( PORTD , PD3 ) ;
 
 	for (;;)
 	{

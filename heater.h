@@ -14,6 +14,7 @@
 
 # define HEATER_NSTAGES               5
 
+extern void heater_update (void ) ;
 extern void heaterproc (void ) ;
 extern void heater_init (void ) ;
 

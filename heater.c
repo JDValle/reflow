@@ -5,6 +5,7 @@
 # include "lcd.h"
 # include "adc.h"
 # include "temp.h"
+# include "pid.h"
 # include "heater.h"
 # include "timer.h"
 
@@ -94,11 +95,11 @@ void heat_display_line0 (void )
 
       switch (heaterstate.stage)
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
       }
 
 
@@ -156,6 +157,11 @@ void heater_display (void )
 ////////////////////////////////////////////////////////////////////////////
 // MAIN
 ////////////////////////////////////////////////////////////////////////////
+
+void heater_update (void )
+{
+  pid_update () ;
+}
 
 void heaterproc (void )
 {
@@ -243,5 +249,6 @@ void heater_init (void )
   adc_init_singlemode ();
   heaterstate.tcurrent = temperature () ;
   heaterstages_setup ();
+  pid_init ();
   heater_stop ();
 }

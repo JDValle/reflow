@@ -6,10 +6,8 @@
 extern const uint32_t timer_ms (void ) ;
 extern void timer_init  (void ) ;
 extern void timer_wait_ms ( uint32_t ms ) ;
-
-extern void lowrestimer_init (void ) ;
-extern void lowrestimer_wait_ticks ( uint32_t ticks ) ;
-
-extern void lowrestimer_handler (void);
+extern void timer_handler (void);
+extern void timer_cs_start (void );
+extern void timer_cs_end   (void );
 
 # endif // REFLOW_TIMER_INCLUDE

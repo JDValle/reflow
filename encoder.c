@@ -40,7 +40,7 @@ uint8_t encoder_update (void )
 
 	if ( read != enc_value )
 	{
-		enc_tests = 125;	// 1 milliseconds on 125khz timer (PEC11 datasheet max debounce rate)
+		enc_tests = 3;		// 3ms
 		enc_value = read;
 		return 0;
 	}

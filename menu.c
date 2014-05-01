@@ -259,7 +259,7 @@ void menu_init (void )
 {
 	lcd_init ();
 
-	menuaction_set(MENU_ACTION_DISPLAYMENU);
+	menuaction_set(MENU_ACTION_IDLE);
 
 	// cache page sizes to use them on the timer interrupt
 	{

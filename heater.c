@@ -81,7 +81,7 @@ void heat_display_line0 (void )
     case HEATER_STATUS_IDLE :
     case HEATER_STATUS_READY :
     {
-      sprintf ( dst , "%06d" , (int )heaterstate.tcurrent ) ;
+      sprintf ( dst , "%3d" , (int )heaterstate.tcurrent ) ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -95,11 +95,11 @@ void heat_display_line0 (void )
 
       switch (heaterstate.stage)
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%03d/%03d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
       }
 
 

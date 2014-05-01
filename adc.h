@@ -4,6 +4,8 @@
 # include <stdint.h>
 
 extern uint16_t adc_single_read ( const uint8_t ch ) ;
+extern uint16_t adc_filter_read ( const uint8_t ch ) ;
+
 extern void adc_init_singlemode(void) ;
 
 # endif // REFLOW_ADC_INCLUDE

@@ -4,6 +4,7 @@
 # include <string.h>
 # include "lcd.h"
 # include "adc.h"
+# include "temp.h"
 # include "heater.h"
 # include "timer.h"
 
@@ -77,8 +78,9 @@ void heat_display_line0 (void )
   switch ( heaterstate.status )
   {
     case HEATER_STATUS_IDLE :
+    case HEATER_STATUS_READY :
     {
-      strcpy (dst , "TEMP");
+      sprintf ( dst , "%06d" , (int )heaterstate.tcurrent ) ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -87,23 +89,21 @@ void heat_display_line0 (void )
       const uint16_t m = (seconds / 60) % 60;
       const uint16_t s = seconds % 60;
 
+      const uint16_t tcurrent = (uint16_t)(heaterstate.tcurrent);
       const uint16_t ttarget = (uint16_t)(heaterstate.ttarget);
 
       switch (heaterstate.stage)
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%03d        %02d:%02d" , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%03d        %02d:%02d" , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%03d        %02d:%02d" , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%03d        %02d:%02d" , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%03d        %02d:%02d" , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%03d/%03d     %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
       }
 
 
     } break ;
-    case HEATER_STATUS_READY :
-    {
-      strcpy (dst , "READY");
-    } break ;
+
   }
 
   lcd_print ( dst , 0 , 0) ;
@@ -117,7 +117,7 @@ void heat_display_line1 (void )
   {
     case HEATER_STATUS_IDLE :
     {
-      strcpy ( dst , "PRESS START") ;
+      strcpy ( dst , "") ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -139,7 +139,7 @@ void heat_display_line1 (void )
     } break ;
     case HEATER_STATUS_READY :
     {
-      strcpy ( dst , "PRESS START") ;
+      strcpy ( dst , "READY") ;
     } break ;
   }
 
@@ -159,6 +159,8 @@ void heater_display (void )
 
 void heaterproc (void )
 {
+  heaterstate.tcurrent = temperature () ;
+
   switch ( heaterstate.status )
   {
     case HEATER_STATUS_IDLE :
@@ -239,6 +241,7 @@ void heater_stop (void )
 void heater_init (void )
 {
   adc_init_singlemode ();
+  heaterstate.tcurrent = temperature () ;
   heaterstages_setup ();
   heater_stop ();
 }

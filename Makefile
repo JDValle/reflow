@@ -10,6 +10,7 @@ AVRDUDE_EXTRAFLAGS =
 
 SRCS=$(wildcard *.c)
 OBJS=$(patsubst %.c,%.o,$(SRCS))
+LIBS=-lm
 #EEPROMS=$(patsubst %.c,%_eeprom.hex,$(SRCS))
 UPLOAD_FLASH	= $(PRG).hex
 

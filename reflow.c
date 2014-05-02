@@ -27,9 +27,6 @@ int main (void)
   	heater_init();
 	menu_init ();
 
-	SetBit ( DDRD , PD3 ) ;
-	SetBit ( PORTD , PD3 ) ;
-
 	for (;;)
 	{
     heaterproc();

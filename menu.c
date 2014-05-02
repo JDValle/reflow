@@ -226,6 +226,14 @@ void menu_update (void )
 
 	switch (menuaction)
 	{
+		case MENU_ACTION_IDLE :
+		{
+			const int8_t diff = encoder_increment ();
+			if (diff==0) return ;
+
+			heater_menu_update (diff);
+		}
+
 		case MENU_ACTION_DISPLAYMENU :
 		{
 			const int8_t diff = encoder_increment ();

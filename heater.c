@@ -2,6 +2,7 @@
 # include <stdint.h>
 # include <stdlib.h>
 # include <string.h>
+# include "common.h"
 # include "lcd.h"
 # include "adc.h"
 # include "temp.h"
@@ -26,6 +27,7 @@ typedef struct
   uint8_t     stage;
   float       tcurrent;
   float       ttarget;
+  uint8_t     pwm_fan ;
   uint32_t    prevms;
   uint32_t    elapsedms;
   heatsetup_t stages [HEATER_NSTAGES];
@@ -81,7 +83,7 @@ void heat_display_line0 (void )
     case HEATER_STATUS_IDLE :
     case HEATER_STATUS_READY :
     {
-      sprintf ( dst , "%3d" , (int )heaterstate.tcurrent ) ;
+      sprintf ( dst , "%3d" , heaterstate.pwm_fan ) ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -160,7 +162,13 @@ void heater_display (void )
 
 void heater_update (void )
 {
+  pid_setheat (heaterstate.pwm_fan);
   pid_update () ;
+}
+
+void heater_menu_update (const int8_t diff)
+{
+ heaterstate.pwm_fan = MAX ( 0 , MIN(127 , heaterstate.pwm_fan + diff ) ) ;
 }
 
 void heaterproc (void )
@@ -248,6 +256,7 @@ void heater_init (void )
 {
   adc_init_singlemode ();
   heaterstate.tcurrent = temperature () ;
+  heaterstate.pwm_fan = 0 ;
   heaterstages_setup ();
   pid_init ();
   heater_stop ();

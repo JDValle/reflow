@@ -13,17 +13,20 @@ OBJS=$(patsubst %.c,%.o,$(SRCS))
 LIBS=-lm
 #EEPROMS=$(patsubst %.c,%_eeprom.hex,$(SRCS))
 UPLOAD_FLASH	= $(PRG).hex
+UPLOAD_EEPROM	= $(PRG)_eeprom.hex
 
 override CFLAGS  =$(OPTIMIZE) $(MCUCFLAGS) $(DEFS)
-override LDFLAGS =$(LDOPTIMIZE)
+override LDFLAGS =$(LDOPTIMIZE) -Wl,-Map=$(PRG).map 
 
 all: $(OBJS)
 
 $(PRG).elf: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS)-o $@ $^ $(LIBS)
 
-upload: $(UPLOAD_FLASH)
-	sudo $(AVRDUDE) $(AVRDUDEFLAGS) -U flash:w:$(UPLOAD_FLASH)
+
+upload: $(UPLOAD_FLASH) $(UPLOAD_EEPROM)
+	sudo $(AVRDUDE) $(AVRDUDEFLAGS) -U  flash:w:$(UPLOAD_FLASH) && \
+  	sudo $(AVRDUDE) $(AVRDUDEFLAGS) -U eeprom:w:$(UPLOAD_EEPROM)
 
 clean:
 	rm -rf *.o *.a *.elf *.eps *.png *.pdf *.bak *.hex

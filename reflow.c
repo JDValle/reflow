@@ -3,6 +3,7 @@
 # include <avr/power.h>
 
 # include "common.h"
+# include "settings.h"
 # include "timer.h"
 # include "menu.h"
 # include "heater.h"
@@ -21,6 +22,7 @@ int main (void)
 {
 	cli ();
 	clock_prescale_set (0);
+	settings_load () ;
 	timer_init ();
 	sei();
 

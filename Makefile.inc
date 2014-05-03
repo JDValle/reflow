@@ -32,13 +32,13 @@ AVRDUDEFLAGS	=-p $(UPLOADCHIP) -c $(PROGRAMMER) -P $(PORT) $(AVRDUDE_EXTRAFLAGS)
 # Rules for building the .eeprom rom images
 
 %_eeprom.hex: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ \
+	$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O ihex $< $@ \
 	|| { echo empty $@ not generated; exit 0; }
 
 %_eeprom.srec: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O srec $< $@ \
+	$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O srec $< $@ \
 	|| { echo empty $@ not generated; exit 0; }
 
 %_eeprom.bin: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O binary $< $@ \
+	$(OBJCOPY) -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 -O binary $< $@ \
 	|| { echo empty $@ not generated; exit 0; }

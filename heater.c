@@ -13,6 +13,10 @@
 # define TIME2SECS(min,sec)           (((min)*60) + (sec) )
 # define LERP(a,b,t)     (((b) - (a)) * (t) + (a))
 
+# define FAN_PWM_MIN  50
+# define FAN_PWM_MAX  127
+# define FAN_RAMP_WIDTH_MS   20000
+
 typedef struct
 {
   uint16_t   tmin ;
@@ -25,9 +29,14 @@ typedef struct
 {
   uint8_t     status;
   uint8_t     stage;
+
   float       tcurrent;
   float       ttarget;
+  
+  uint8_t     fan_min ;
+  uint8_t     fan_max ;
   uint8_t     pwm_fan ;
+
   uint32_t    prevms;
   uint32_t    elapsedms;
   heatsetup_t stages [HEATER_NSTAGES];
@@ -39,23 +48,112 @@ void heaterstages_setup (void )
 {
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmin = 0 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmax = 150 ;
-  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = TIME2SECS(0,22) ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = TIME2SECS(1,10) ;
 
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmin = 150 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmax = 150 ;
-  heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].seconds = TIME2SECS(0,10) ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].seconds = TIME2SECS(1,10) ;
 
   heaterstate.stages [HEATER_STAGE_REFLOW_START].tmin = 150 ;
   heaterstate.stages [HEATER_STAGE_REFLOW_START].tmax = 260 ;
-  heaterstate.stages [HEATER_STAGE_REFLOW_START].seconds = TIME2SECS(0,50) ;
+  heaterstate.stages [HEATER_STAGE_REFLOW_START].seconds = TIME2SECS(0,10) ;
 
   heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].tmin = 260 ;
   heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].tmax = 260 ;
-  heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].seconds = TIME2SECS(0,20) ;
+  heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].seconds = TIME2SECS(0,10) ;
 
   heaterstate.stages [HEATER_STAGE_COOLDOWN].tmin = 260 ;
   heaterstate.stages [HEATER_STAGE_COOLDOWN].tmax = 0 ;
   heaterstate.stages [HEATER_STAGE_COOLDOWN].seconds = TIME2SECS(0,20) ; ;
+}
+
+////////////////////////////////////////////////////////////////////////////
+// FAN
+////////////////////////////////////////////////////////////////////////////
+
+uint8_t fan2pwm (const uint8_t fan )
+{
+  if (!fan) return 0 ;
+
+  const uint16_t r = (fan * (FAN_PWM_MAX - FAN_PWM_MIN) + 1) ;
+  return ((uint8_t) (r >> 7)) + (FAN_PWM_MIN + 1) ;
+}
+
+void fan_update (void )
+{
+  const uint8_t fan_max = heaterstate.fan_max ;
+  if (fan_max == 0 )
+  {
+    heaterstate.pwm_fan = 0 ;
+    return ;
+  }
+
+  const uint8_t fan_min = heaterstate.fan_min ;
+  if (fan_min == fan_max )
+  {
+    heaterstate.pwm_fan = fan_min ;
+    return ;
+  }
+
+  const uint32_t elapsed = heaterstate.elapsedms % FAN_RAMP_WIDTH_MS ;
+  const float felapsed =  (float) (elapsed / 1000) ;
+  const float k = (felapsed / (FAN_RAMP_WIDTH_MS/1000)) ;
+
+  const float ftmin = (float)( heaterstate.fan_min );
+  const float ftmax = (float)( heaterstate.fan_max );
+
+  if ( elapsed >= (FAN_RAMP_WIDTH_MS/2) )
+  {
+    heaterstate.pwm_fan = (uint8_t ) LERP(ftmin,ftmax, ( (k*2.0)       - 1.0 ) );
+  }
+  else
+  {
+    heaterstate.pwm_fan = (uint8_t ) LERP(ftmin,ftmax, ( ((1-k) * 2.0) - 1.0) );
+  }  
+}
+
+void fan (void)
+{
+  switch (heaterstate.status)
+  {
+    case HEATER_STATUS_IDLE :
+    {
+      heaterstate.fan_min = 0 ;
+      heaterstate.fan_max = 0 ;
+    } break ;
+
+    case HEATER_STATUS_RUNNING :
+    {
+
+      switch (heaterstate.stage)
+      {
+        case HEATER_STAGE_PREHEATER_START :
+        case HEATER_STAGE_PREHEATER_KEEP  :
+        case HEATER_STAGE_REFLOW_START    :
+        case HEATER_STAGE_REFLOW_KEEP     :
+        {
+          heaterstate.fan_min = 1 ;
+          heaterstate.fan_max = 40 ;
+        } break ;
+
+        case HEATER_STAGE_COOLDOWN :
+        {
+          heaterstate.fan_min = 127 ;
+          heaterstate.fan_max = 127 ;
+        } break ;
+      }
+    } break ; // end HEATER_STATUS_RUNNING
+
+    case HEATER_STATUS_READY :
+    {
+      heaterstate.fan_min = 127 ;
+      heaterstate.fan_max = 127 ;
+    } break ;
+
+  }
+
+  fan_update () ;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -83,7 +181,7 @@ void heat_display_line0 (void )
     case HEATER_STATUS_IDLE :
     case HEATER_STATUS_READY :
     {
-      sprintf ( dst , "%3d" , heaterstate.pwm_fan ) ;
+      sprintf ( dst , "%3d" , (int )heaterstate.tcurrent ) ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -94,14 +192,15 @@ void heat_display_line0 (void )
 
       const uint16_t tcurrent = (uint16_t)(heaterstate.tcurrent);
       const uint16_t ttarget = (uint16_t)(heaterstate.ttarget);
+      const uint8_t fan = (uint16_t) fan2pwm ( heaterstate.pwm_fan );
 
       switch (heaterstate.stage)
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%3d/%3d    %02d:%02d" , tcurrent , ttarget , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
+      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
+      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
       }
 
 
@@ -162,18 +261,20 @@ void heater_display (void )
 
 void heater_update (void )
 {
-  pid_setheat (heaterstate.pwm_fan);
+  pid_setheat ( fan2pwm (heaterstate.pwm_fan) ) ;
   pid_update () ;
 }
 
 void heater_menu_update (const int8_t diff)
 {
- heaterstate.pwm_fan = MAX ( 0 , MIN(127 , heaterstate.pwm_fan + diff ) ) ;
+// heaterstate.pwm_fan = MAX ( 0 , MIN(127 , heaterstate.pwm_fan + diff ) ) ;
 }
 
 void heaterproc (void )
 {
   heaterstate.tcurrent = temperature () ;
+
+  fan () ;
 
   switch ( heaterstate.status )
   {

@@ -37,6 +37,8 @@ typedef struct
   uint8_t     fan_max ;
   uint8_t     pwm_fan ;
 
+  uint8_t     heater0 ;
+
   uint32_t    prevms;
   uint32_t    elapsedms;
   heatsetup_t stages [HEATER_NSTAGES];
@@ -48,7 +50,7 @@ void heaterstages_setup (void )
 {
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmin = 0 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmax = 150 ;
-  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = TIME2SECS(1,10) ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = TIME2SECS(0,10) ;
 
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmin = 150 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmax = 150 ;
@@ -112,6 +114,51 @@ void fan_update (void )
   }  
 }
 
+void heater0 (void )
+{
+  switch (heaterstate.status)
+  {
+    case HEATER_STATUS_IDLE :
+    {
+      heaterstate.heater0 = 0 ;
+    } break ;
+
+    case HEATER_STATUS_RUNNING :
+    {
+      switch (heaterstate.stage)
+      {
+        case HEATER_STAGE_PREHEATER_START :
+        {
+          heaterstate.heater0 = 32 ;
+        } break ;
+        case HEATER_STAGE_PREHEATER_KEEP  :
+        {
+          heaterstate.heater0 = 32 ;
+        } break ;
+        case HEATER_STAGE_REFLOW_START    :
+        {
+          heaterstate.heater0 = 64 ;
+        } break ;
+        case HEATER_STAGE_REFLOW_KEEP     :
+        {
+          heaterstate.heater0 = 127 ;
+        } break ;
+
+        case HEATER_STAGE_COOLDOWN :
+        {
+          heaterstate.heater0 = 0 ;
+        } break ;
+      }
+    } break ; // end HEATER_STATUS_RUNNING
+
+    case HEATER_STATUS_READY :
+    {
+      heaterstate.heater0 = 0 ;
+    } break ;
+
+  }
+}
+
 void fan (void)
 {
   switch (heaterstate.status)
@@ -165,6 +212,7 @@ void heater_setstage (const uint8_t stage )
     heaterstate.stage = stage ;
     heaterstate.elapsedms =  0 ;
     heaterstate.prevms = timer_ms() ;
+    pid_beep () ;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -261,7 +309,8 @@ void heater_display (void )
 
 void heater_update (void )
 {
-  pid_setheat ( fan2pwm (heaterstate.pwm_fan) ) ;
+  pid_setheater0 ( heaterstate.heater0 ) ;
+  pid_setfan ( fan2pwm (heaterstate.pwm_fan) ) ;
   pid_update () ;
 }
 
@@ -274,6 +323,7 @@ void heaterproc (void )
 {
   heaterstate.tcurrent = temperature () ;
 
+  heater0 () ;
   fan () ;
 
   switch ( heaterstate.status )

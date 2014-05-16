@@ -3,7 +3,10 @@
 
 # include "common.h"
 # include "timer.h"
+# include "adc.h"
 # include "lcd_PCD8544.h"
+
+# define CONTRAST_CHANNEL         2
 
 # define PINS_READ_PCD8544_RST		PIND
 # define PINS_WRITE_PCD8544_RST		PORTD		
@@ -43,6 +46,7 @@
 static uint8_t pcd8544_buffer[PCD8544_MEMSIZE] ;
 static uint8_t pcd8544_dirtymask [ PCD8544_DIRTYMSK_MEMSIZE ] ;
 static uint8_t pcd8544_tmpmask [ LCDPCD8544_WIDTH * 2 + 1  ] ;
+static uint8_t pcd8544_refresh = 0 ;
 
 static const uint8_t ASCII[][LCDPCD8544_CHARWIDTH] = {
   {0x00, 0x00, 0x00, 0x00, 0x00} // 20  
@@ -143,6 +147,26 @@ static const uint8_t ASCII[][LCDPCD8544_CHARWIDTH] = {
   ,{0x78, 0x46, 0x41, 0x46, 0x78} // 7f DEL
 };
 
+void lcdPCD8544_readcontrast (void )
+{
+  if (pcd8544_refresh == 0 )
+  {
+    const uint8_t contrast = (adc_filter_read ( CONTRAST_CHANNEL ) >> 3) & 0xff ;
+
+    lcdPCD8544_send_byte ( PCD8544_FUNCTIONSET | PCD8544_EXTENDEDINSTRUCTION , LCDPCD8544_CMD ) ;
+    lcdPCD8544_send_byte ( PCD8544_SETVOP | contrast , LCDPCD8544_CMD ) ;
+    lcdPCD8544_send_byte ( PCD8544_FUNCTIONSET | 0 , LCDPCD8544_CMD ) ;
+
+    pcd8544_refresh = 16 ;
+
+  }
+  else
+  {
+    -- pcd8544_refresh ;
+  }
+
+}
+
 ///// BUFFER ///////
 
 void lcdPCD8544_clear (void )
@@ -166,6 +190,8 @@ void lcdPCD8544_send_buffer (void )
   uint8_t row , x ;
   uint8_t bit , rdirty;
   uint8_t start, stop ;
+
+  lcdPCD8544_readcontrast () ;
 
   for ( row=0; row < LCDPCD8544_ROWS ; ++ row )
   {

@@ -1,3 +1,5 @@
 *.o
-reflow.elf
-reflow.hex
+*.elf
+*.hex
+*.map
+

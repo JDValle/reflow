@@ -20,9 +20,11 @@ void timer_handler ()
 int main(void) __attribute__((noreturn));
 int main (void)
 {
+	// do this before disabling any interrupt
+	settings_load () ;
+
 	cli ();
 	clock_prescale_set (0);
-	settings_load () ;
 	timer_init ();
 	sei();
 

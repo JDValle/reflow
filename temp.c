@@ -1,8 +1,8 @@
 # include <math.h>
 # include "adc.h"
 
-# define ADC_ROOMK_CHANNEL		0
-# define ADC_PROBEK_CHANNEL		1
+# define ADC_ROOMK_CHANNEL		1
+# define ADC_PROBEK_CHANNEL		0
 
 const float VOL_OFFSET = 350.0;		// offset voltage, mv
 const float AMP_AV     = 54.16;		// Av of amplifier
@@ -73,8 +73,29 @@ float K_VtoT(const float mV)
     return value;
 }
 
+static float rtemp = 0.0;
+static float ptemp = 0.0;
+static float temp_rtemp = 0.0;
+static float temp_ptemp = 0.0;
+static uint8_t temp_test = 0;
+
+# define MAXTEMPTEST    64
+
 float temperature (void)
 {
-	const float vol = getprobevoltage() ;	
-	return ( K_VtoT(vol) + getroomcelsius() ) ;
+    temp_ptemp += K_VtoT( getprobevoltage() ) ;
+    temp_rtemp += getroomcelsius() ;
+    ++ temp_test ;
+
+    if (temp_test > MAXTEMPTEST)
+    {
+        rtemp = temp_rtemp * (1.0/128.0) ;
+        ptemp = temp_ptemp * (1.0/MAXTEMPTEST) ;
+        temp_rtemp = 0 ;
+        temp_ptemp = 0 ;
+        temp_test = 0 ;
+    }
+
+	return ( rtemp + ptemp ) ;
 }
+

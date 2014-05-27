@@ -129,15 +129,15 @@ void heater0 (void )
       {
         case HEATER_STAGE_PREHEATER_START :
         {
-          heaterstate.heater0 = 32 ;
+          heaterstate.heater0 = 127 ;
         } break ;
         case HEATER_STAGE_PREHEATER_KEEP  :
         {
-          heaterstate.heater0 = 32 ;
+          heaterstate.heater0 = 64 ;
         } break ;
         case HEATER_STAGE_REFLOW_START    :
         {
-          heaterstate.heater0 = 64 ;
+          heaterstate.heater0 = 127 ;
         } break ;
         case HEATER_STAGE_REFLOW_KEEP     :
         {
@@ -229,7 +229,7 @@ void heat_display_line0 (void )
     case HEATER_STATUS_IDLE :
     case HEATER_STATUS_READY :
     {
-      sprintf ( dst , "%3d" , (int )heaterstate.tcurrent ) ;
+      sprintf ( dst , "TEMP %3d" , (int )heaterstate.tcurrent ) ;
     } break ;
     case HEATER_STATUS_RUNNING :
     {
@@ -244,11 +244,11 @@ void heat_display_line0 (void )
 
       switch (heaterstate.stage)
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "%3d/%3d %3d%02d:%02d" , tcurrent , ttarget , fan , m , s ) ; } break ;
+      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
+      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
+      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
+      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
+      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
       }
 
 

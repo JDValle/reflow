@@ -41,6 +41,8 @@ typedef struct
 
   uint32_t    prevms;
   uint32_t    elapsedms;
+  uint32_t    totalms;
+
   heatsetup_t stages [HEATER_NSTAGES];
 } heaterstate_t;
 
@@ -48,6 +50,10 @@ static heaterstate_t heaterstate;
 
 void heaterstages_setup (void )
 {
+  heaterstate.stages [HEATER_STAGE_PREHEATER_NONE].tmin = 0 ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_NONE].tmax = 0 ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_NONE].seconds = 0 ;
+
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmin = 0 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmax = 150 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = TIME2SECS(0,10) ;
@@ -127,6 +133,10 @@ void heater0 (void )
     {
       switch (heaterstate.stage)
       {
+        case HEATER_STAGE_PREHEATER_NONE :
+        {
+          heaterstate.heater0 = 0 ;          
+        } break ;
         case HEATER_STAGE_PREHEATER_START :
         {
           heaterstate.heater0 = 127 ;
@@ -171,9 +181,13 @@ void fan (void)
 
     case HEATER_STATUS_RUNNING :
     {
-
       switch (heaterstate.stage)
       {
+        case HEATER_STAGE_PREHEATER_NONE :
+        {
+          heaterstate.fan_min = 0 ;
+          heaterstate.fan_max = 0 ;
+        } break ;
         case HEATER_STAGE_PREHEATER_START :
         case HEATER_STAGE_PREHEATER_KEEP  :
         case HEATER_STAGE_REFLOW_START    :
@@ -211,6 +225,7 @@ void heater_setstage (const uint8_t stage )
 {
     heaterstate.stage = stage ;
     heaterstate.elapsedms =  0 ;
+    heaterstate.totalms = heaterstate.stages [stage].seconds ;
     heaterstate.prevms = timer_ms() ;
     pid_beep () ;
 }
@@ -223,84 +238,67 @@ void heat_display_line0 (void )
 {
   char * dst = lcd_tmpstring();
 
-  // CURRENT STATUS   / TIME TO GO
-  switch ( heaterstate.status )
-  {
-    case HEATER_STATUS_IDLE :
-    case HEATER_STATUS_READY :
-    {
-      sprintf ( dst , "TEMP %3d" , (int )heaterstate.tcurrent ) ;
-    } break ;
-    case HEATER_STATUS_RUNNING :
-    {
+  const uint16_t tcurrent = (uint16_t)(heaterstate.tcurrent);
+  const uint16_t ttarget = (uint16_t)(heaterstate.ttarget);
+  const uint8_t fan = (uint16_t) fan2pwm ( heaterstate.pwm_fan );
 
-      const uint16_t seconds = heaterstate.elapsedms / 1000 ;
-      const uint16_t m = (seconds / 60) % 60;
-      const uint16_t s = seconds % 60;
-
-      const uint16_t tcurrent = (uint16_t)(heaterstate.tcurrent);
-      const uint16_t ttarget = (uint16_t)(heaterstate.ttarget);
-      const uint8_t fan = (uint16_t) fan2pwm ( heaterstate.pwm_fan );
-
-      switch (heaterstate.stage)
-      {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "T %3d/%3d F %3d" , tcurrent , ttarget , fan ) ; } break ;
-      }
-
-
-    } break ;
-
-  }
+  sprintf ( dst , "T%3d/%3d -  F%3d" , tcurrent , ttarget , fan ) ;
 
   lcd_print ( dst , 0 , 0) ;
 }
 
-void heat_display_line1 (void )
+void heat_display_status (void )
 {
   char * dst = lcd_tmpstring();
-
-  switch ( heaterstate.status )
+  
+  // STATUS
   {
-    case HEATER_STATUS_IDLE :
+    switch ( heaterstate.status )
     {
-      strcpy ( dst , "") ;
-    } break ;
-    case HEATER_STATUS_RUNNING :
-    {
-
-      const uint16_t seconds = heaterstate.stages[heaterstate.stage].seconds ;
-      const uint16_t m = (seconds / 60) % 60;
-      const uint16_t s = seconds % 60;
-
-      switch (heaterstate.stage)
+      case HEATER_STATUS_IDLE :
       {
-      case HEATER_STAGE_PREHEATER_START : { sprintf ( dst , "PREHEAT A  %02d:%02d" , m , s ) ; } break ;
-      case HEATER_STAGE_PREHEATER_KEEP  : { sprintf ( dst , "PREHEAT B  %02d:%02d" , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_START    : { sprintf ( dst , "REFLOW  A  %02d:%02d" , m , s ) ; } break ;
-      case HEATER_STAGE_REFLOW_KEEP     : { sprintf ( dst , "REFLOW  B  %02d:%02d" , m , s ) ; } break ;
-      case HEATER_STAGE_COOLDOWN        : { sprintf ( dst , "COOLDOWN   %02d:%02d" , m , s ) ; } break ;
-      }
-
-
-    } break ;
-    case HEATER_STATUS_READY :
-    {
-      strcpy ( dst , "READY") ;
-    } break ;
+        strcpy ( dst , "") ;
+      } break ;
+      case HEATER_STATUS_RUNNING :
+      {
+        switch (heaterstate.stage)
+        {
+        case HEATER_STAGE_PREHEATER_NONE  : { strcpy ( dst , "") ; } break ;
+        case HEATER_STAGE_PREHEATER_START : { strcpy ( dst , "PREHEAT A") ; } break ;
+        case HEATER_STAGE_PREHEATER_KEEP  : { strcpy ( dst , "PREHEAT B") ; } break ;
+        case HEATER_STAGE_REFLOW_START    : { strcpy ( dst , "REFLOW  A") ; } break ;
+        case HEATER_STAGE_REFLOW_KEEP     : { strcpy ( dst , "REFLOW  B") ; } break ;
+        case HEATER_STAGE_COOLDOWN        : { strcpy ( dst , "COOLDOWN ") ; } break ;
+        }
+      } break ;
+      case HEATER_STATUS_READY :
+      {
+        strcpy ( dst , "READY    ") ;
+      } break ;
+    }
+    lcd_print ( dst , 0 , 5) ;
   }
 
-  lcd_print ( dst , 0 , 1) ;
+  // TIME
+  {
+    const uint16_t elapsed_seconds = heaterstate.elapsedms / 1000 ;
+    const uint16_t total_seconds = heaterstate.stages[heaterstate.stage].seconds ;
+    const uint16_t seconds = total_seconds - elapsed_seconds ;
+    const uint16_t m = (seconds / 60) % 60;
+    const uint16_t s = seconds % 60;
+
+    sprintf ( dst , "%02d:%02d" , m , s ) ;
+    lcd_print ( dst , 11 , 5) ;   
+  }
+
+
 }
 
 void heater_display (void )
 {
   lcd_cls ();
   heat_display_line0 () ;
-  heat_display_line1 () ;
+  heat_display_status () ;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -399,7 +397,7 @@ void heater_start (void )
 
 void heater_stop (void )
 {
-  heater_setstage (HEATER_STAGE_PREHEATER_START) ;
+  heater_setstage (HEATER_STAGE_PREHEATER_NONE) ;
   heaterstate.status = HEATER_STATUS_IDLE ;
 }
 

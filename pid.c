@@ -8,15 +8,15 @@
 
 # define PINS_WRITE_PWMFAN			PORTD
 # define PINS_DDR_PWMFAN			DDRD
-# define PINS_OFFSET_PWMFAN			3
+# define PINS_OFFSET_PWMFAN			5
 
 # define PINS_WRITE_PWMHEATER0		PORTD
 # define PINS_DDR_PWMHEATER0		DDRD
-# define PINS_OFFSET_PWMHEATER0		4
+# define PINS_OFFSET_PWMHEATER0		6
 
-# define PINS_WRITE_BUZZ			PORTD
-# define PINS_DDR_BUZZ				DDRD
-# define PINS_OFFSET_BUZZ			5
+# define PINS_WRITE_BUZZ			PORTB
+# define PINS_DDR_BUZZ				DDRB
+# define PINS_OFFSET_BUZZ			4
 
 volatile static uint8_t pwm_count ;
 volatile static uint8_t pwm_fan ;

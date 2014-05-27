@@ -6,8 +6,8 @@
 # define PINS_READ_ENC			PINB
 # define PINS_WRITE_ENC			PORTB
 # define PINS_DDR_ENC			DDRB
-# define PINS_OFFSET_ENC_A		0
-# define PINS_OFFSET_ENC_B		1
+# define PINS_OFFSET_ENC_A		1
+# define PINS_OFFSET_ENC_B		0
 # define PINS_OFFSET_ENC_BTN	2
 
 static volatile uint8_t enc_value;
@@ -40,7 +40,7 @@ uint8_t encoder_update (void )
 
 	if ( read != enc_value )
 	{
-		enc_tests = 3;		// 3ms
+		enc_tests = 2;		// 3ms
 		enc_value = read;
 		return 0;
 	}

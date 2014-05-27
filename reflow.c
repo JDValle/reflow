@@ -28,13 +28,13 @@ int main (void)
 	timer_init ();
 	sei();
 
-  	heater_init();
+	heater_init();
 	menu_init ();
 
 	for (;;)
 	{
-    heaterproc();
-	menuproc ();
+	    heaterproc();
+		menuproc ();
 	}
 }
 

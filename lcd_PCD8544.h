@@ -40,5 +40,6 @@ extern void lcdPCD8544_send_buffer () ;
 
 extern void lcdPCD8544_cls (void ) ;
 extern void lcdPCD8544_print ( const char * str , const uint8_t x , const uint8_t y) ;
+extern void lcdPCD8544_changepixel (const uint8_t xpixel , const uint8_t ypixel , const uint8_t setclear ) ;
 
 # endif // REFLOW_LCDPCD8544_INCLUDE

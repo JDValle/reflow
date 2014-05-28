@@ -151,7 +151,8 @@ void lcdPCD8544_readcontrast (void )
 {
   if (pcd8544_refresh == 0 )
   {
-    const uint8_t contrast = (adc_filter_read ( CONTRAST_CHANNEL ) >> 3) & 0xff ;
+    const float k = ((float )adc_filter_read ( CONTRAST_CHANNEL )) / 1024.0 ;    
+    const uint8_t contrast = (uint8_t ) ( 64.0 + ( 16.0 * ( 2.0*k - 1.0) ) ) ;
 
     lcdPCD8544_send_byte ( PCD8544_FUNCTIONSET | PCD8544_EXTENDEDINSTRUCTION , LCDPCD8544_CMD ) ;
     lcdPCD8544_send_byte ( PCD8544_SETVOP | contrast , LCDPCD8544_CMD ) ;
@@ -326,6 +327,39 @@ void lcdPCD8544_print ( const char * str , const uint8_t x , const uint8_t y)
     } // end for copy bitmap
 
   } // end for string
+}
+
+void lcdPCD8544_changepixel (const uint8_t xpixel , const uint8_t ypixel , const uint8_t setclear )
+{
+  if (xpixel>=LCDPCD8544_WIDTH ) return ;
+  if (ypixel>=LCDPCD8544_HEIGHT) return ;
+
+  const uint8_t row = ypixel / LCDPCD8544_ROWHEIGHT ;
+
+  // get buffer position
+  uint8_t *dst = pcd8544_buffer + (row*LCDPCD8544_WIDTH) + xpixel ;
+  uint8_t *dirtyp = pcd8544_dirtymask + (row*PCD8544_DIRTYMSK_ROWSIZE) + (xpixel/8) ;
+
+  const uint8_t prev = *dst ;
+  uint8_t src  = *dst ;
+
+  // set pixel
+  if ( setclear )
+  {
+    SetBit   ( src    , ypixel % LCDPCD8544_ROWHEIGHT ) ;     
+  }
+  else
+  {
+    ClearBit ( src    , ypixel % LCDPCD8544_ROWHEIGHT ) ;      
+  }
+
+  // copy only if different
+  if (prev!=src)
+  {          
+    *dst = src ;
+    // mark pixel as dirty
+    SetBit ( dirtyp [xpixel/8] , (7 - xpixel%8) ) ;
+  }
 }
 
 ///// IO ///////

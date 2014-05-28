@@ -17,6 +17,8 @@
 # define FAN_PWM_MAX  127
 # define FAN_RAMP_WIDTH_MS   20000
 
+# define THISTORYSIZE LCDPCD8544_WIDTH
+
 typedef struct
 {
   uint16_t   tmin ;
@@ -40,10 +42,13 @@ typedef struct
   uint8_t     heater0 ;
 
   uint32_t    prevms;
-  uint32_t    elapsedms;
-  uint32_t    totalms;
+  uint32_t    lastupdatems;
+  uint32_t    elapsedms;  
+
+  uint16_t    total_seconds;
 
   heatsetup_t stages [HEATER_NSTAGES];
+  uint8_t     thistory [THISTORYSIZE];
 } heaterstate_t;
 
 static heaterstate_t heaterstate;
@@ -120,55 +125,6 @@ void fan_update (void )
   }  
 }
 
-void heater0 (void )
-{
-  switch (heaterstate.status)
-  {
-    case HEATER_STATUS_IDLE :
-    {
-      heaterstate.heater0 = 0 ;
-    } break ;
-
-    case HEATER_STATUS_RUNNING :
-    {
-      switch (heaterstate.stage)
-      {
-        case HEATER_STAGE_PREHEATER_NONE :
-        {
-          heaterstate.heater0 = 0 ;          
-        } break ;
-        case HEATER_STAGE_PREHEATER_START :
-        {
-          heaterstate.heater0 = 127 ;
-        } break ;
-        case HEATER_STAGE_PREHEATER_KEEP  :
-        {
-          heaterstate.heater0 = 64 ;
-        } break ;
-        case HEATER_STAGE_REFLOW_START    :
-        {
-          heaterstate.heater0 = 127 ;
-        } break ;
-        case HEATER_STAGE_REFLOW_KEEP     :
-        {
-          heaterstate.heater0 = 127 ;
-        } break ;
-
-        case HEATER_STAGE_COOLDOWN :
-        {
-          heaterstate.heater0 = 0 ;
-        } break ;
-      }
-    } break ; // end HEATER_STATUS_RUNNING
-
-    case HEATER_STATUS_READY :
-    {
-      heaterstate.heater0 = 0 ;
-    } break ;
-
-  }
-}
-
 void fan (void)
 {
   switch (heaterstate.status)
@@ -218,6 +174,77 @@ void fan (void)
 }
 
 ////////////////////////////////////////////////////////////////////////////
+// HEAT
+////////////////////////////////////////////////////////////////////////////
+
+void heater0 (void )
+{
+  switch (heaterstate.status)
+  {
+    case HEATER_STATUS_IDLE :
+    {
+      heaterstate.heater0 = 0 ;
+    } break ;
+
+    case HEATER_STATUS_RUNNING :
+    {
+      switch (heaterstate.stage)
+      {
+        case HEATER_STAGE_PREHEATER_NONE :
+        {
+          heaterstate.heater0 = 0 ;          
+        } break ;
+        case HEATER_STAGE_PREHEATER_START :
+        {
+          heaterstate.heater0 = 127 ;
+        } break ;
+        case HEATER_STAGE_PREHEATER_KEEP  :
+        {
+          heaterstate.heater0 = 64 ;
+        } break ;
+        case HEATER_STAGE_REFLOW_START    :
+        {
+          heaterstate.heater0 = 127 ;
+        } break ;
+        case HEATER_STAGE_REFLOW_KEEP     :
+        {
+          heaterstate.heater0 = 127 ;
+        } break ;
+
+        case HEATER_STAGE_COOLDOWN :
+        {
+          heaterstate.heater0 = 0 ;
+        } break ;
+      }
+    } break ; // end HEATER_STATUS_RUNNING
+
+    case HEATER_STATUS_READY :
+    {
+      heaterstate.heater0 = 0 ;
+    } break ;
+
+  }
+}
+
+void thistory (void )
+{
+  const uint32_t ms = heaterstate.elapsedms - heaterstate.lastupdatems ;
+
+  if ( ms < 1000 ) return ;
+
+  const float k = ( heaterstate.tcurrent / 300.0) ;
+  heaterstate.thistory [THISTORYSIZE-1] =  (uint8_t ) ( (LCDPCD8544_ROWHEIGHT * 4.0 - 2) * k );
+
+  uint8_t i ;
+  for ( i = 0 ; i < (THISTORYSIZE-1) ; ++ i )
+  {
+    heaterstate.thistory [i] = heaterstate.thistory [i+1];
+  }
+
+  heaterstate.lastupdatems = heaterstate.elapsedms ;
+}
+
+////////////////////////////////////////////////////////////////////////////
 // API
 ////////////////////////////////////////////////////////////////////////////
 
@@ -225,7 +252,7 @@ void heater_setstage (const uint8_t stage )
 {
     heaterstate.stage = stage ;
     heaterstate.elapsedms =  0 ;
-    heaterstate.totalms = heaterstate.stages [stage].seconds ;
+    heaterstate.total_seconds = heaterstate.stages [stage].seconds ;
     heaterstate.prevms = timer_ms() ;
     pid_beep () ;
 }
@@ -280,24 +307,43 @@ void heat_display_status (void )
   }
 
   // TIME
+  if ( heaterstate.total_seconds > 0 )    
   {
     const uint16_t elapsed_seconds = heaterstate.elapsedms / 1000 ;
-    const uint16_t total_seconds = heaterstate.stages[heaterstate.stage].seconds ;
-    const uint16_t seconds = total_seconds - elapsed_seconds ;
+    const uint16_t seconds = heaterstate.total_seconds - elapsed_seconds ;
     const uint16_t m = (seconds / 60) % 60;
     const uint16_t s = seconds % 60;
-
     sprintf ( dst , "%02d:%02d" , m , s ) ;
-    lcd_print ( dst , 11 , 5) ;   
   }
+  else
+  {
+    const uint16_t seconds = heaterstate.elapsedms / 1000 ;
+    const uint16_t m = (seconds / 60) % 60;
+    const uint16_t s = seconds % 60;
+    sprintf ( dst , "%02d:%02d" , m , s ) ;
+  }
+  lcd_print ( dst , 11 , 5) ;   
+}
 
+void heater_graph (void )
+{
+  uint8_t x,y;
+  for ( x = 0 ; x < THISTORYSIZE ; ++ x )
+  {
+    const uint8_t h = heaterstate.thistory [x] ;
 
+    for ( y = 0; y < h ; ++ y )
+    {
+      lcdPCD8544_changepixel ( x , 38 - y , 1 ) ;
+    }
+  }
 }
 
 void heater_display (void )
 {
   lcd_cls ();
   heat_display_line0 () ;
+  heater_graph () ;
   heat_display_status () ;
 }
 
@@ -319,28 +365,30 @@ void heater_menu_update (const int8_t diff)
 
 void heaterproc (void )
 {
+  // update time
+  {
+    const uint32_t ms = timer_ms() ;
+    heaterstate.elapsedms += abs ( heaterstate.prevms - ms ) ;
+    heaterstate.prevms = ms ;       
+  }
+
+  // update temp
   heaterstate.tcurrent = temperature () ;
 
+  // update
   heater0 () ;
   fan () ;
+  thistory () ;
 
   switch ( heaterstate.status )
   {
     case HEATER_STATUS_IDLE :
     {
       heaterstate.ttarget = 0 ;
-      heaterstate.elapsedms = 0 ;
     } break ;
 
     case HEATER_STATUS_RUNNING :
     {
-      // update time
-      {
-        const uint32_t ms = timer_ms() ;
-        heaterstate.elapsedms += abs ( heaterstate.prevms - ms ) ;
-        heaterstate.prevms = ms ;       
-      }
-
       // check if we crossed the time
       {
         const uint16_t seconds = heaterstate.elapsedms / 1000 ;
@@ -384,7 +432,6 @@ void heaterproc (void )
     case HEATER_STATUS_READY :
     {
       heaterstate.ttarget = 0 ;
-      heaterstate.elapsedms = 0 ;
     } break ;
   }
 }
@@ -405,6 +452,8 @@ void heater_init (void )
 {
   adc_init_singlemode ();
   heaterstate.tcurrent = temperature () ;
+  heaterstate.lastupdatems = 0 ;
+  memset ( heaterstate.thistory , 0 , THISTORYSIZE ) ;
   heaterstate.pwm_fan = 0 ;
   heaterstages_setup ();
   pid_init ();

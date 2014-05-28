@@ -20,7 +20,7 @@ extern void heater_menu_update (const int8_t diff) ;
 extern void heaterproc (void ) ;
 extern void heater_init (void ) ;
 
-extern void heater_start (void ) ;
+extern void heater_run (void ) ;
 extern void heater_stop (void ) ;
 
 extern void heater_display (void ) ;

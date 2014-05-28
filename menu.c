@@ -39,21 +39,25 @@ static uint8_t menuidle ;
 const char mstrglob0 [] PROGMEM = ".." ;
 # define MSTRGLOB 		mstrglob0
 
-const char mstrmain0 [] PROGMEM = "START" ;
-const char mstrmain1 [] PROGMEM = "STOP" ;
-const char mstrmain2 [] PROGMEM = "CONF PREHEAT" ;
-const char mstrmain3 [] PROGMEM = "CONF REFLOW" ;
-const char mstrmain4 [] PROGMEM = "CONF COOLDOWN" ;
-const char mstrmain5 [] PROGMEM = "LOAD PRESET 1" ;
-const char mstrmain6 [] PROGMEM = "LOAD PRESET 2" ;
-const char mstrmain7 [] PROGMEM = "LOAD PRESET 3" ;
-const char mstrmain8 [] PROGMEM = "SAVE PRESET 1" ;
-const char mstrmain9 [] PROGMEM = "SAVE PRESET 2" ;
-const char mstrmain10[] PROGMEM = "SAVE PRESET 3" ;
-const char mstrmain11[] PROGMEM = "SETTINGS" ;
-const char mstrmain12[] PROGMEM = "ABOUT" ;
-# define MSTRMAIN	mstrmain0,mstrmain1, mstrmain2, mstrmain3,mstrmain4,mstrmain5,mstrmain6,\
-					mstrmain7,mstrmain8,mstrmain9,mstrmain10,mstrmain11,mstrmain12
+const char mstrmain00 [] PROGMEM = "SET TEMP" ;
+const char mstrmain01 [] PROGMEM = "SET TIMER" ;
+const char mstrmain02 [] PROGMEM = "RUN PROGRAM" ;
+const char mstrmain03 [] PROGMEM = "STOP PROGRAM" ;
+const char mstrmain04 [] PROGMEM = "CONF PREHEAT" ;
+const char mstrmain05 [] PROGMEM = "CONF REFLOW" ;
+const char mstrmain06 [] PROGMEM = "CONF COOLDOWN" ;
+const char mstrmain07 [] PROGMEM = "LOAD PRESET 1" ;
+const char mstrmain08 [] PROGMEM = "LOAD PRESET 2" ;
+const char mstrmain09 [] PROGMEM = "LOAD PRESET 3" ;
+const char mstrmain10 [] PROGMEM = "SAVE PRESET 1" ;
+const char mstrmain11 [] PROGMEM = "SAVE PRESET 2" ;
+const char mstrmain12[] PROGMEM = "SAVE PRESET 3" ;
+const char mstrmain13[] PROGMEM = "SETTINGS" ;
+const char mstrmain14[] PROGMEM = "ABOUT" ;
+
+# define MSTRMAIN	mstrmain00,mstrmain01,mstrmain02,mstrmain03,mstrmain04,\
+					mstrmain05,mstrmain06,mstrmain07,mstrmain08,mstrmain09,\
+					mstrmain10,mstrmain11,mstrmain12,mstrmain13,mstrmain14
 
 const char mstrcfg0 [] PROGMEM = "set min temp" ;
 const char mstrcfg1 [] PROGMEM = "set max temp" ;
@@ -69,39 +73,47 @@ const char * const menustrings[] PROGMEM = { MSTRGLOB , MSTRMAIN , MSTRCFG0 };
 # define MENU_ACTION_DISPLAYMENU		0x02
 # define MENU_ACTION_DISPLAYMENU		0x02
 
-# define MENU_ACTION_START				0x11
-# define MENU_ACTION_STOP				0x12
-# define MENU_ACTION_ABOUT				0x13
+# define MENU_ACTION_SETTEMP			0x11
+# define MENU_ACTION_SETTIMER			0x12
+# define MENU_ACTION_RUN				0x13
+# define MENU_ACTION_STOP				0x14
+# define MENU_ACTION_ABOUT				0x15
 
 # define MENUITEM_GLOB_PARENT			0
-# define MENUITEM_MAIN_START			1
-# define MENUITEM_MAIN_STOP				2
-# define MENUITEM_MAIN_CONFPREHEAT		3
-# define MENUITEM_MAIN_CONFREFLOW		4
-# define MENUITEM_MAIN_CONFCOOLDOWN		5
-# define MENUITEM_MAIN_LOADPRESET1		6
-# define MENUITEM_MAIN_LOADPRESET2		7
-# define MENUITEM_MAIN_LOADPRESET3		8
-# define MENUITEM_MAIN_SAVEPRESET1		9
-# define MENUITEM_MAIN_SAVEPRESET2		10
-# define MENUITEM_MAIN_SAVEPRESET3		11
-# define MENUITEM_MAIN_SETTINGS			12
-# define MENUITEM_MAIN_ABOUT			13
+# define MENUITEM_MAIN_SETTEMP			1
+# define MENUITEM_MAIN_SETTIMER			2
+# define MENUITEM_MAIN_RUN				3
+# define MENUITEM_MAIN_STOP				4
+# define MENUITEM_MAIN_CONFPREHEAT		5
+# define MENUITEM_MAIN_CONFREFLOW		6
+# define MENUITEM_MAIN_CONFCOOLDOWN		7
+# define MENUITEM_MAIN_LOADPRESET1		8
+# define MENUITEM_MAIN_LOADPRESET2		9
+# define MENUITEM_MAIN_LOADPRESET3		10
+# define MENUITEM_MAIN_SAVEPRESET1		11
+# define MENUITEM_MAIN_SAVEPRESET2		12
+# define MENUITEM_MAIN_SAVEPRESET3		13
+# define MENUITEM_MAIN_SETTINGS			14
+# define MENUITEM_MAIN_ABOUT			15
+
 
 const uint8_t menu_main [] PROGMEM = { MENUPAGESIZE(13) , -1
-										, MENUITEM_MAIN_START			, 1     , MENU_ACTION_START          , -1
-										, MENUITEM_MAIN_STOP			, 2     , MENU_ACTION_STOP           , -1
-										, MENUITEM_MAIN_CONFPREHEAT		, 3     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_CONFREFLOW		, 4     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_CONFCOOLDOWN	, 5     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET1		, 6     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET2		, 7     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET3		, 8     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET1		, 9     , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET2		, 10    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET3		, 11    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SETTINGS		, 12    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_ABOUT			, 13    , MENU_ACTION_ABOUT          , -1
+// ITEM ID , STRING INDEX , ACTION INDEX , ACTION PARAM
+										, MENUITEM_MAIN_SETTEMP			, 1    , MENU_ACTION_SETTEMP        , -1
+										, MENUITEM_MAIN_SETTIMER		, 2    , MENU_ACTION_SETTIMER       , -1
+										, MENUITEM_MAIN_RUN				, 3    , MENU_ACTION_RUN            , -1
+										, MENUITEM_MAIN_STOP			, 4    , MENU_ACTION_STOP           , -1
+										, MENUITEM_MAIN_CONFPREHEAT		, 5    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_CONFREFLOW		, 6    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_CONFCOOLDOWN	, 7    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_LOADPRESET1		, 8    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_LOADPRESET2		, 9    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_LOADPRESET3		, 10    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_SAVEPRESET1		, 11    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_SAVEPRESET2		, 12    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_SAVEPRESET3		, 13    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_SETTINGS		, 14    , MENU_ACTION_NOTIMPLEMENTED , -1
+										, MENUITEM_MAIN_ABOUT			, 15    , MENU_ACTION_ABOUT          , -1
 									} ;
 
 const uint8_t * const menupages[] PROGMEM = { menu_main } ;
@@ -148,6 +160,8 @@ void menu_action_heater (void )
 void menu_displaymenu ()
 {
 	uint8_t i , current;
+
+	lcd_cls () ;
 
 	const uint8_t nitems = MENUPAGENITEMS(tmpmenupage[0]);
 	current = menupage_base ;
@@ -196,8 +210,9 @@ void menu_action_displaymenu (void )
 
 void menu_action_about (void )
 {
-	lcd_print ("derethor"   , 0 , 0 ) ;
-	lcd_print ("@gmail.com" , 0 , 1 ) ;
+	lcd_cls ();
+	lcd_print ("REFLOW CTRL  "   , 0 , 0 ) ;
+	lcd_print ("@staticboards"   , 0 , 1 ) ;
 
 	const uint8_t click = encoder_click_read();
 	if (click != ENCODER_AFTERCLICK) return ;
@@ -290,7 +305,7 @@ void menuproc (void )
 	{
 		case MENU_ACTION_IDLE 			: menu_action_heater (); break;
 		case MENU_ACTION_DISPLAYMENU 	: menu_action_displaymenu (); break;		
-		case MENU_ACTION_START 			: { heater_start (); menuaction_set(MENU_ACTION_IDLE); } break;
+		case MENU_ACTION_RUN 			: { heater_run (); menuaction_set(MENU_ACTION_IDLE); } break;
 		case MENU_ACTION_STOP 			: { heater_stop  (); menuaction_set(MENU_ACTION_IDLE); } break;
 		case MENU_ACTION_ABOUT 			: menu_action_about (); break;
 		default: menu_action_heater();

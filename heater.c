@@ -436,7 +436,7 @@ void heaterproc (void )
   }
 }
 
-void heater_start (void )
+void heater_run (void )
 {
   heater_setstage (HEATER_STAGE_PREHEATER_START);
   heaterstate.status = HEATER_STATUS_RUNNING ;

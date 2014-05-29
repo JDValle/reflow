@@ -3,7 +3,6 @@
 
 # define HEATER_STATUS_IDLE     0
 # define HEATER_STATUS_RUNNING  1
-# define HEATER_STATUS_READY    2
 
 # define HEATER_STAGE_PREHEATER_NONE	0
 # define HEATER_STAGE_PREHEATER_START	1
@@ -20,6 +19,7 @@ extern void heater_menu_update (const int8_t diff) ;
 extern void heaterproc (void ) ;
 extern void heater_init (void ) ;
 
+extern void heater_settemp (const uint8_t temp) ;
 extern void heater_run (void ) ;
 extern void heater_stop (void ) ;
 

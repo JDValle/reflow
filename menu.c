@@ -1,12 +1,17 @@
+# include <stdio.h>
 # include <string.h>
 # include <avr/pgmspace.h>
 # include "common.h"
+# include "timer.h"
 # include "lcd.h"
 # include "encoder.h"
 # include "menu.h"
 # include "heater.h"
 
-# define MENU_IDLE_TICKS		5L	*1000L*125L
+void menuset (const uint8_t action , const uint8_t param ) ;
+
+
+# define MENU_IDLE_TICKS		5 * 1000
 # define MENU_MAXITEMSPERMENU	16
 # define MENU_MAXPAGES			8
 
@@ -36,6 +41,7 @@ static uint8_t menupage_current;
 static uint32_t menuidleticks ;
 static uint8_t menuidle ;
 
+static int16_t inputvalue, inputmin, inputmax ;
 
 //                                "                "
 const char mstrglob0 [] PROGMEM = ".." ;
@@ -63,10 +69,10 @@ const char mstrmain15[] PROGMEM = "ABOUT" ;
 					mstrmain10,mstrmain11,mstrmain12,mstrmain13,mstrmain14,\
 					mstrmain15
 
-const char mstrcfg0 [] PROGMEM = "set min temp" ;
-const char mstrcfg1 [] PROGMEM = "set max temp" ;
-const char mstrcfg2 [] PROGMEM = "set time ramp" ;
-const char mstrcfg3 [] PROGMEM = "set time maxtemp" ;
+const char mstrcfg0 [] PROGMEM = "MIN TEMP" ;
+const char mstrcfg1 [] PROGMEM = "MAX TEMP" ;
+const char mstrcfg2 [] PROGMEM = "TIME RAMP" ;
+const char mstrcfg3 [] PROGMEM = "TIME KEEP" ;
 # define MSTRCFG0	mstrcfg0,mstrcfg1, mstrcfg2, mstrcfg3
 
 const char * const menustrings[] PROGMEM = { MSTRGLOB , MSTRMAIN , MSTRCFG0 };
@@ -125,13 +131,6 @@ const uint8_t * const menupages[] PROGMEM = { menu_main } ;
 # define MENUPAGES_NPAGES	1
 # define MENU_MAIN		0
 
-void menuaction_set (const uint8_t action , const uint8_t param )
-{
-	menuaction = action ;
-	menuactionparam = param ;
-	encoder_click_reset () ;
-}
-
 void menu_loadstr (char * dst , const uint8_t i)
 {
 	strcpy_P ( dst , (PGM_P)pgm_read_word(&(menustrings[i])) ) ;
@@ -159,7 +158,7 @@ void menu_action_heater (void )
 	menuidleticks = 0 ;
 	menuidle = 0 ;
 
-	menuaction_set (MENU_ACTION_DISPLAYMENU , MENU_MAIN ) ;
+	menuset (MENU_ACTION_DISPLAYMENU , MENU_MAIN ) ;
 }
 
 # define MENUITEM(idx)			(( const menuitem_t *) (tmpmenupage + MENUPAGEITEM(idx)))
@@ -212,7 +211,30 @@ void menu_action_displaymenu (const uint8_t menu )
 	
 	// if we have pending clicks, switch action
 	const menuitem_t * item = MENUITEM(menupage_cursor) ;
-	menuaction_set (item->action , item->param) ;
+	menuset (item->action , item->param) ;
+}
+
+void menu_action_settemp (void )
+{
+	lcd_cls ();
+	lcd_print ("TEMP :"   , 0 , 0 ) ;
+
+	timer_cs_start ();
+	const int16_t temp = inputvalue ;
+	timer_cs_end ();
+
+	char * dst = lcd_tmpstring();
+	sprintf ( dst , "%3d" , temp ) ;
+	lcd_print (dst, 7 , 0 ) ;
+
+	// read input
+	const uint8_t click = encoder_click_read();
+	if (click != ENCODER_AFTERCLICK) return ;
+	
+	heater_settemp (temp) ;
+
+	// if we have pending clicks, switch action
+	menuset (MENU_ACTION_IDLE , 0 ) ;
 }
 
 void menu_action_about (void )
@@ -224,7 +246,7 @@ void menu_action_about (void )
 	const uint8_t click = encoder_click_read();
 	if (click != ENCODER_AFTERCLICK) return ;
 
-	menuaction_set (MENU_ACTION_DISPLAYMENU , MENU_MAIN ) ;
+	menuset (MENU_ACTION_DISPLAYMENU , MENU_MAIN ) ;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -280,6 +302,15 @@ void menu_update (void )
 			}
 
 		} break ;
+
+		case MENU_ACTION_SETTEMP :
+		{
+			const int8_t diff = encoder_increment () ;
+			if (diff==0) return ;
+			inputvalue = MAX( inputmin , MIN ( inputmax , inputvalue + (diff*5) ) ) ;
+
+		} break ;
+
 	}
 
 	// dont write code here, actions will leave the function before
@@ -289,7 +320,7 @@ void menu_init (void )
 {
 	lcd_init ();
 
-	menuaction_set(MENU_ACTION_IDLE , 0 );
+	menuset(MENU_ACTION_IDLE , 0 );
 
 	// cache page sizes to use them on the timer interrupt
 	{
@@ -302,18 +333,37 @@ void menu_init (void )
 	}
 }
 
+void menuset (const uint8_t action , const uint8_t param )
+{
+	menuaction = action ;
+	menuactionparam = param ;
+	encoder_click_reset () ;
+
+	switch (action)
+	{
+		case MENU_ACTION_SETTEMP :
+		{
+			inputvalue = 100 ;
+			inputmin = 0 ;
+			inputmax = 350 ;
+		} break ;
+	}
+
+}
+
 void menuproc (void )
 {
 	// if we dont do anything, go to idle
-	if (menuidle) menuaction_set(MENU_ACTION_IDLE , 0 );
+	if (menuidle) menuset(MENU_ACTION_IDLE , 0 );
 
 	// run menu
 	switch (menuaction)
 	{
 		case MENU_ACTION_IDLE 			: menu_action_heater (); break;
 		case MENU_ACTION_DISPLAYMENU 	: menu_action_displaymenu (menuactionparam); break;		
-		case MENU_ACTION_RUN 			: { heater_run (); menuaction_set(MENU_ACTION_IDLE,0); } break;
-		case MENU_ACTION_STOP 			: { heater_stop  (); menuaction_set(MENU_ACTION_IDLE,0); } break;
+		case MENU_ACTION_SETTEMP 		: menu_action_settemp (); break;
+		case MENU_ACTION_RUN 			: { heater_run ();  menuset(MENU_ACTION_IDLE,0); } break;
+		case MENU_ACTION_STOP 			: { heater_stop  (); menuset(MENU_ACTION_IDLE,0); }break;
 		case MENU_ACTION_ABOUT 			: menu_action_about (); break;
 		default: menu_action_heater();
 	}

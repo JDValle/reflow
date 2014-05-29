@@ -89,7 +89,7 @@ float temperature (void)
 
     if (temp_test > MAXTEMPTEST)
     {
-        rtemp = temp_rtemp * (1.0/128.0) ;
+        rtemp = temp_rtemp * (1.0/MAXTEMPTEST) ;
         ptemp = temp_ptemp * (1.0/MAXTEMPTEST) ;
         temp_rtemp = 0 ;
         temp_ptemp = 0 ;

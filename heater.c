@@ -9,6 +9,7 @@
 # include "pid.h"
 # include "heater.h"
 # include "timer.h"
+# include "uart.h"
 
 # define TIME2SECS(min,sec)           (((min)*60) + (sec) )
 # define LERP(a,b,t)     (((b) - (a)) * (t) + (a))
@@ -286,12 +287,26 @@ void heater_graph (void )
   }
 }
 
+void heater_log (void )
+{
+# ifdef UART_ENABLE
+  const uint16_t tcurrent = (uint16_t)(heaterstate.tcurrent);
+  const uint16_t ttarget = (uint16_t)(heaterstate.ttarget);
+
+  char * dst = lcd_tmpstring() ;
+  sprintf ( dst , "%03d,%03d,%03d\n\r" , (int)tcurrent, (int)ttarget, (int)heaterstate.heater0 ) ;
+  uart_send_async_wait ( dst , strlen (dst) ) ;
+  timer_wait_ms (100);
+# endif
+}
+
 void heater_display (void )
 {
   lcd_cls ();
   heat_display_line0 () ;
   heater_graph () ;
   heat_display_status () ;
+  heater_log () ;
 }
 
 ////////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,13 @@
 # include "heater.h"
 # include "pid.h"
 
+# ifdef UART_ENABLE
+# include <stdio.h>
+# include <string.h>
+# include "uart.h"
+# include "lcd.h"
+# endif
+
 ////////////////////////////////////////////////////////////////////////
 
 void timer_handler ()
@@ -26,14 +33,25 @@ int main (void)
 	cli ();
 	clock_prescale_set (0);
 	timer_init ();
+# ifdef UART_ENABLE
+	uart_init (UART_INIT_INTERRUPT_ENABLED) ;
+# endif
 	sei();
+
+# ifdef UART_ENABLE
+	{
+		char *dst = lcd_tmpstring () ;
+		strcpy (  dst , "== BEGIN ==\n\r") ;
+		uart_send_async_wait (dst , strlen(dst) ) ;		
+	}
+# endif
 
 	heater_init();
 	menu_init ();
 
 	for (;;)
 	{
-	    heaterproc();
+		heaterproc();
 		menuproc ();
 	}
 }

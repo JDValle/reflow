@@ -35,6 +35,7 @@ typedef struct
   uint8_t     stage;
 
   float       tcurrent;
+  float       tambient;
   float       ttarget;
   
   uint8_t     fan_min ;
@@ -61,9 +62,9 @@ void heaterstages_setup (void )
   heaterstate.stages [HEATER_STAGE_PREHEATER_NONE].tmax = 0 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_NONE].seconds = 0 ;
 
-  heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmin = 0 ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmin = heaterstate.tambient ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_START].tmax = 150 ;
-  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = 150 ;
+  heaterstate.stages [HEATER_STAGE_PREHEATER_START].seconds = 200 ;
 
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmin = 150 ;
   heaterstate.stages [HEATER_STAGE_PREHEATER_KEEP].tmax = 150 ;
@@ -71,15 +72,20 @@ void heaterstages_setup (void )
 
   heaterstate.stages [HEATER_STAGE_REFLOW_START].tmin = 150 ;
   heaterstate.stages [HEATER_STAGE_REFLOW_START].tmax = 220 ;
-  heaterstate.stages [HEATER_STAGE_REFLOW_START].seconds = 50 ;
+  heaterstate.stages [HEATER_STAGE_REFLOW_START].seconds = 150 ;
 
   heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].tmin = 220 ;
   heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].tmax = 220 ;
-  heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].seconds = 80 ;
+  heaterstate.stages [HEATER_STAGE_REFLOW_KEEP].seconds = 100 ;
 
   heaterstate.stages [HEATER_STAGE_COOLDOWN].tmin = 220 ;
-  heaterstate.stages [HEATER_STAGE_COOLDOWN].tmax = 0 ;
-  heaterstate.stages [HEATER_STAGE_COOLDOWN].seconds = 100 ;
+  heaterstate.stages [HEATER_STAGE_COOLDOWN].tmax = heaterstate.tambient ;
+  heaterstate.stages [HEATER_STAGE_COOLDOWN].seconds = 350 ;
+
+  heaterstate.stages [HEATER_STAGE_READY].tmin = 0 ;
+  heaterstate.stages [HEATER_STAGE_READY].tmax = 0 ;
+  heaterstate.stages [HEATER_STAGE_COOLDOWN].seconds = 0 ;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -155,8 +161,17 @@ void fan (void)
 
         case HEATER_STAGE_COOLDOWN :
         {
-          heaterstate.fan_min = 127 ;
-          heaterstate.fan_max = 127 ;
+          if ( heaterstate.tcurrent > ( heaterstate.tambient + 30.0 ) )
+          {
+            heaterstate.fan_min = 127 ;
+            heaterstate.fan_max = 127 ;            
+          }
+          else
+          {
+            heaterstate.fan_min = 0 ;
+            heaterstate.fan_max = 0 ;            
+          }
+
         } break ;
       }
     } break ; // end HEATER_STATUS_RUNNING
@@ -172,6 +187,88 @@ void fan (void)
 
 void heater0 (void )
 {
+  switch (heaterstate.status)
+  {
+    case HEATER_STATUS_IDLE :
+    {
+    } break ;
+
+    case HEATER_STATUS_RUNNING :
+    {
+      // check if we crossed the time
+      {
+        const uint16_t seconds = heaterstate.elapsedms / 1000 ;
+
+        if ( seconds >= heaterstate.stages[heaterstate.stage].seconds )
+        {
+          heater_setstage (heaterstate.stage+1);
+        }       
+      }
+
+      // check if we end up
+      {
+        if (heaterstate.stage == HEATER_STAGE_READY)
+        {
+          heaterstate.status = HEATER_STATUS_IDLE ;
+        }        
+      }
+
+      // calculate target temp
+      {
+        const uint16_t tmin = heaterstate.stages[heaterstate.stage].tmin;
+        const uint16_t tmax = heaterstate.stages[heaterstate.stage].tmax;
+
+        if (tmin==tmax)
+        {
+          heaterstate.ttarget = (float)(tmin);
+        }
+        else
+        {
+          const float ftmin = (float)(tmin);
+          const float ftmax = (float)(tmax);
+          const float felapsed =  (float) (heaterstate.elapsedms / 1000);
+          const float fseconds =  (float) (heaterstate.stages[heaterstate.stage].seconds);
+          const float k = felapsed / fseconds ;
+
+          heaterstate.ttarget = LERP(ftmin,ftmax,k);          
+        }
+
+      }
+
+      switch (heaterstate.stage)
+      {
+        case HEATER_STAGE_PREHEATER_NONE :
+        {
+        } break ;
+        case HEATER_STAGE_PREHEATER_START :
+        {
+          pid_tune( 2 , 0.0 , 0.0 ) ;
+        } break ;
+        case HEATER_STAGE_PREHEATER_KEEP  :
+        {
+          pid_tune( 2 , 0.010 , 0.15 ) ;
+        } break ;
+        case HEATER_STAGE_REFLOW_START    :
+        {
+          pid_tune( 5 , 0.0 , 0.0 ) ;
+        } break ;
+        case HEATER_STAGE_REFLOW_KEEP     :
+        {
+          pid_tune( 2 , 0.011 , 0.15 ) ;
+        } break ;
+        case HEATER_STAGE_COOLDOWN :
+        {
+          pid_tune( 2 , 0.011 , 0.15 ) ;
+        } break ;
+        case HEATER_STAGE_READY :
+        {
+          pid_tune( 2 , 0.011 , 0.15 ) ;
+        } break ;
+      }
+
+    } break ; // end HEATER_STATUS_RUNNING
+  }
+
   pid_compute ( heaterstate.tcurrent , heaterstate.ttarget , &heaterstate.heater0 ) ;
 }
 
@@ -331,62 +428,12 @@ void heaterproc (void )
   }
 
   // update temp
-  heaterstate.tcurrent = temperature () ;
+  temperature ( & heaterstate.tambient , & heaterstate.tcurrent ) ;
 
   // update
   heater0 () ;
   fan () ;
   thistory () ;
-
-  switch ( heaterstate.status )
-  {
-    case HEATER_STATUS_IDLE :
-    {
-    } break ;
-
-    case HEATER_STATUS_RUNNING :
-    {
-      // check if we crossed the time
-      {
-        const uint16_t seconds = heaterstate.elapsedms / 1000 ;
-
-        if ( seconds >= heaterstate.stages[heaterstate.stage].seconds )
-        {
-          heater_setstage (heaterstate.stage+1);
-        }       
-      }
-
-      // check if we end up
-      {
-        if (heaterstate.stage == HEATER_STAGE_READY)
-        {
-          heaterstate.ttarget =  0 ;
-          heaterstate.status = HEATER_STATUS_IDLE ;
-          return;
-        }        
-      }
-
-      // calculate target temp
-      {
-        const uint16_t tmin = heaterstate.stages[heaterstate.stage].tmin;
-        const uint16_t tmax = heaterstate.stages[heaterstate.stage].tmax;
-
-        if (tmin==tmax)
-        {
-          heaterstate.ttarget = (float)(tmin);
-        }
-
-        const float ftmin = (float)(tmin);
-        const float ftmax = (float)(tmax);
-        const float felapsed =  (float) (heaterstate.elapsedms / 1000);
-        const float fseconds =  (float) (heaterstate.stages[heaterstate.stage].seconds);
-        const float k = felapsed / fseconds ;
-
-        heaterstate.ttarget = LERP(ftmin,ftmax,k);
-      }
-
-    } break ;
-  }
 }
 
 void heater_settemp (const uint8_t temp)
@@ -432,7 +479,7 @@ void heater_stop (void )
 void heater_init (void )
 {
   adc_init_singlemode ();
-  heaterstate.tcurrent = temperature () ;
+  temperature ( & heaterstate.tambient , & heaterstate.tcurrent ) ;
   heaterstate.ttarget = 0 ;  
   heaterstate.lastupdatems = 0 ;
   memset ( heaterstate.thistory , 0 , THISTORYSIZE ) ;

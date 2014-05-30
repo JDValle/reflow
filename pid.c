@@ -232,7 +232,7 @@ void pid_init   (void )
 	{
 		pid_heater0.inAuto = 0 ;
 		pid_setlimits(0, 127 , NULL );
-	    pid_heater0.SampleTime = 100; //0.1 seconds
+	    pid_heater0.SampleTime = 1000; // 1 seconds
 		pid_setdirection(PID_DIRECT);
 		pid_tune( 2 , 0.011 , 0.15 ) ;
 		pid_heater0.lastTime = timer_ms() - pid_heater0.SampleTime;	

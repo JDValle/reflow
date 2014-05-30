@@ -81,7 +81,7 @@ static uint8_t temp_test = 0;
 
 # define MAXTEMPTEST    64
 
-float temperature (void)
+void temperature ( float * room , float * probe )
 {
     temp_ptemp += K_VtoT( getprobevoltage() ) ;
     temp_rtemp += getroomcelsius() ;
@@ -96,6 +96,7 @@ float temperature (void)
         temp_test = 0 ;
     }
 
-	return ( rtemp + ptemp ) ;
+    * room = rtemp ;
+    * probe= (rtemp + ptemp ) ;
 }
 

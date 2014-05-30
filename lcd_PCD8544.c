@@ -366,6 +366,8 @@ void lcdPCD8544_changepixel (const uint8_t xpixel , const uint8_t ypixel , const
 
 inline void lcdPCD8544_spi_byte (const uint8_t data)
 {
+# ifdef LCDPCD8544_ENABLE
+
 	uint8_t bit ;
 	for(bit = 1<<7 ; bit; bit >>= 1)
 	{
@@ -376,10 +378,14 @@ inline void lcdPCD8544_spi_byte (const uint8_t data)
 
 		SetBit ( PINS_WRITE_PCD8544_CLK , PINS_OFFSET_PCD8544_CLK ) ;
 	}	
+
+# endif
 }
 
 void lcdPCD8544_send_byte (const uint8_t data , const uint8_t dc)
 {
+# ifdef LCDPCD8544_ENABLE
+
 	// SETUP DATA/COMMAND
 	if (dc)	SetBit     ( PINS_WRITE_PCD8544_DC  , PINS_OFFSET_PCD8544_DC ) ;
 	else	ClearBit   ( PINS_WRITE_PCD8544_DC  , PINS_OFFSET_PCD8544_DC ) ;
@@ -392,10 +398,13 @@ void lcdPCD8544_send_byte (const uint8_t data , const uint8_t dc)
 
 	// HIGH SIGNAL START
 	SetBit   ( PINS_WRITE_PCD8544_CE  , PINS_OFFSET_PCD8544_CE ) ;
+
+#endif
 }
 
 void lcdPCD8544_send_bytes ( const uint8_t * src , const uint16_t size , const uint8_t dc )
 {
+# ifdef LCDPCD8544_ENABLE
 	// SETUP DATA/COMMAND
 	if (dc)	SetBit     ( PINS_WRITE_PCD8544_DC  , PINS_OFFSET_PCD8544_DC ) ;
 	else	ClearBit   ( PINS_WRITE_PCD8544_DC  , PINS_OFFSET_PCD8544_DC ) ;
@@ -410,6 +419,7 @@ void lcdPCD8544_send_bytes ( const uint8_t * src , const uint16_t size , const u
 
 	// HIGH SIGNAL START
 	SetBit   ( PINS_WRITE_PCD8544_CE  , PINS_OFFSET_PCD8544_CE ) ;
+# endif
 }
 
 void lcdPCD8544_init (void )

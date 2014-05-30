@@ -3,6 +3,8 @@
 
 # include <stdint.h>
 
+# define LCDPCD8544_ENABLE
+
 # define LCDPCD8544_WIDTH 				84
 # define LCDPCD8544_HEIGHT 				48
 # define LCDPCD8544_ROWHEIGHT 			8

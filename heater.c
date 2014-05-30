@@ -172,11 +172,7 @@ void fan (void)
 
 void heater0 (void )
 {
-  float heater0 ;
-  if ( pid_compute ( heaterstate.tcurrent , heaterstate.ttarget , &heater0 ) )
-  {
-    heaterstate.heater0 = (uint8_t ) heater0 ;    
-  }
+  pid_compute ( heaterstate.tcurrent , heaterstate.ttarget , &heaterstate.heater0 ) ;
 }
 
 void thistory (void )
@@ -399,8 +395,16 @@ void heater_settemp (const uint8_t temp)
   heater_setstage (HEATER_STAGE_PREHEATER_NONE) ;
   heaterstate.status = HEATER_STATUS_IDLE ;
 
-  pid_initialize ( heaterstate.tcurrent , heaterstate.heater0 ) ;
-  pid_setmode( PID_AUTOMATIC , heaterstate.tcurrent , heaterstate.heater0 ) ;
+  if (temp > 0 )
+  {
+    pid_initialize ( heaterstate.tcurrent , heaterstate.heater0 ) ;
+    pid_setmode( PID_AUTOMATIC , heaterstate.tcurrent , heaterstate.heater0 ) ;
+  }
+  else
+  {
+    pid_setmode( PID_MANUAL , 0 , 0 ) ;    
+    heaterstate.heater0 = 0 ;
+  }
 }
 
 void heater_setfan (const uint8_t fan)
@@ -422,8 +426,7 @@ void heater_run (void )
 
 void heater_stop (void )
 {
-  heater_setstage (HEATER_STAGE_PREHEATER_NONE) ;
-  heaterstate.status = HEATER_STATUS_IDLE ;
+  heater_settemp (0);
 }
 
 void heater_init (void )

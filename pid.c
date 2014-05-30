@@ -63,7 +63,7 @@ void pid_initialize( const float myInput , const float myOutput )
 	pid_update_iterm () ;
 }
 
-uint8_t pid_compute (const float myInput , const float mySetpoint , float * myOutput )
+uint8_t pid_compute (const float myInput , const float mySetpoint , uint8_t * output )
 {
 	if(!pid_heater0.inAuto) return 0 ;
 
@@ -83,9 +83,9 @@ uint8_t pid_compute (const float myInput , const float mySetpoint , float * myOu
 	const float dInput = (input - pid_heater0.lastInput) ;
 
 	/*Compute PID Output*/
-	const float output = (pid_heater0.kp * error) + (pid_heater0.ITerm) - (pid_heater0.kd * dInput) ;
+	const float foutput = (pid_heater0.kp * error) + (pid_heater0.ITerm) - (pid_heater0.kd * dInput) ;
 
-	*myOutput = MAX ( pid_heater0.outMin , MIN ( pid_heater0.outMax , output ) ) ;
+	*output = (uint8_t ) ( MAX ( pid_heater0.outMin , MIN ( pid_heater0.outMax , foutput ) ) ) ;
 
 	/*Remember some variables for next time*/
 	pid_heater0.lastInput = input ;
@@ -234,7 +234,7 @@ void pid_init   (void )
 		pid_setlimits(0, 127 , NULL );
 	    pid_heater0.SampleTime = 100; //0.1 seconds
 		pid_setdirection(PID_DIRECT);
-		pid_tune( 3 , 0.05 , 35.0 ) ;
+		pid_tune( 2 , 0.011 , 0.15 ) ;
 		pid_heater0.lastTime = timer_ms() - pid_heater0.SampleTime;	
 	}
 }

@@ -12,7 +12,7 @@ extern void pid_init   (void ) ;
 extern void pid_update (void ) ;
 
 extern void pid_initialize( const float myInput , const float myOutput ) ;
-extern uint8_t pid_compute (const float myInput , const float mySetpoint , float * myOutput ) ;
+extern uint8_t pid_compute (const float myInput , const float mySetpoint , uint8_t * output ) ;
 extern void pid_tune (const float Kp, const float Ki, const float Kd) ;
 extern void pid_setsampletime (const uint32_t NewSampleTimeMS ) ;
 extern void pid_setlimits (const float Min, const float Max, float * myOutput ) ;

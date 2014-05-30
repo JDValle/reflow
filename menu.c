@@ -237,6 +237,30 @@ void menu_action_settemp (void )
 	menuset (MENU_ACTION_IDLE , 0 ) ;
 }
 
+void menu_action_setfan (void )
+{
+	lcd_cls ();
+	lcd_print ("FAN  :"   , 0 , 0 ) ;
+
+	timer_cs_start ();
+	const int16_t fan = inputvalue ;
+	timer_cs_end ();
+
+	char * dst = lcd_tmpstring();
+	sprintf ( dst , "%3d" , fan ) ;
+	lcd_print (dst, 7 , 0 ) ;
+
+	// read input
+	const uint8_t click = encoder_click_read();
+	if (click != ENCODER_AFTERCLICK) return ;
+	
+	heater_setfan (fan) ;
+
+	// if we have pending clicks, switch action
+	menuset (MENU_ACTION_IDLE , 0 ) ;
+}
+
+
 void menu_action_about (void )
 {
 	lcd_cls ();
@@ -304,13 +328,13 @@ void menu_update (void )
 		} break ;
 
 		case MENU_ACTION_SETTEMP :
+		case MENU_ACTION_SETFAN :
 		{
 			const int8_t diff = encoder_increment () ;
 			if (diff==0) return ;
 			inputvalue = MAX( inputmin , MIN ( inputmax , inputvalue + (diff*5) ) ) ;
 
 		} break ;
-
 	}
 
 	// dont write code here, actions will leave the function before
@@ -347,6 +371,14 @@ void menuset (const uint8_t action , const uint8_t param )
 			inputmin = 0 ;
 			inputmax = 350 ;
 		} break ;
+
+		case MENU_ACTION_SETFAN :
+		{
+			inputvalue = 0 ;
+			inputmin = 0 ;
+			inputmax = 127 ;
+		} break ;
+
 	}
 
 }
@@ -362,6 +394,7 @@ void menuproc (void )
 		case MENU_ACTION_IDLE 			: menu_action_heater (); break;
 		case MENU_ACTION_DISPLAYMENU 	: menu_action_displaymenu (menuactionparam); break;		
 		case MENU_ACTION_SETTEMP 		: menu_action_settemp (); break;
+		case MENU_ACTION_SETFAN 		: menu_action_setfan  (); break;
 		case MENU_ACTION_RUN 			: { heater_run ();  menuset(MENU_ACTION_IDLE,0); } break;
 		case MENU_ACTION_STOP 			: { heater_stop  (); menuset(MENU_ACTION_IDLE,0); }break;
 		case MENU_ACTION_ABOUT 			: menu_action_about (); break;

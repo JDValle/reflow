@@ -20,6 +20,7 @@ extern void heaterproc (void ) ;
 extern void heater_init (void ) ;
 
 extern void heater_settemp (const uint8_t temp) ;
+extern void heater_setfan  (const uint8_t fan) ;
 extern void heater_run (void ) ;
 extern void heater_stop (void ) ;
 

@@ -132,8 +132,6 @@ void fan (void)
   {
     case HEATER_STATUS_IDLE :
     {
-        heaterstate.fan_min = 0 ;
-        heaterstate.fan_max = 0 ;        
     } break ;
 
     case HEATER_STATUS_RUNNING :
@@ -388,6 +386,14 @@ void heater_settemp (const uint8_t temp)
 
   pid_initialize ( heaterstate.tcurrent , heaterstate.heater0 ) ;
   pid_setmode( PID_AUTOMATIC , heaterstate.tcurrent , heaterstate.heater0 ) ;
+}
+
+void heater_setfan (const uint8_t fan)
+{
+  heaterstate.fan_min = fan ;
+  heaterstate.fan_max = fan ;
+  heater_setstage (HEATER_STAGE_PREHEATER_NONE) ;
+  heaterstate.status = HEATER_STATUS_IDLE ;
 }
 
 void heater_run (void )

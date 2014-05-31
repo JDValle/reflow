@@ -44,38 +44,15 @@ static uint8_t menuidle ;
 static int16_t inputvalue, inputmin, inputmax ;
 
 //                                "                "
-const char mstrglob0 [] PROGMEM = ".." ;
-# define MSTRGLOB 		mstrglob0
+const char mstr00 [] PROGMEM = "SET TEMP" ;
+const char mstr01 [] PROGMEM = "SET FAN" ;
+const char mstr02 [] PROGMEM = "RUN PROGRAM" ;
+const char mstr03 [] PROGMEM = "STOP PROGRAM" ;
+const char mstr04 [] PROGMEM = "ABOUT" ;
 
-const char mstrmain00 [] PROGMEM = "SET TEMP" ;
-const char mstrmain01 [] PROGMEM = "SET FAN" ;
-const char mstrmain02 [] PROGMEM = "SET TIMER" ;
-const char mstrmain03 [] PROGMEM = "RUN PROGRAM" ;
-const char mstrmain04 [] PROGMEM = "STOP PROGRAM" ;
-const char mstrmain05 [] PROGMEM = "CONF PREHEAT" ;
-const char mstrmain06 [] PROGMEM = "CONF REFLOW" ;
-const char mstrmain07 [] PROGMEM = "CONF COOLDOWN" ;
-const char mstrmain08 [] PROGMEM = "LOAD PRESET 1" ;
-const char mstrmain09 [] PROGMEM = "LOAD PRESET 2" ;
-const char mstrmain10 [] PROGMEM = "LOAD PRESET 3" ;
-const char mstrmain11 [] PROGMEM = "SAVE PRESET 1" ;
-const char mstrmain12 [] PROGMEM = "SAVE PRESET 2" ;
-const char mstrmain13[] PROGMEM = "SAVE PRESET 3" ;
-const char mstrmain14[] PROGMEM = "SETTINGS" ;
-const char mstrmain15[] PROGMEM = "ABOUT" ;
+# define MSTRMAIN	mstr00,mstr01,mstr02,mstr03,mstr04
 
-# define MSTRMAIN	mstrmain00,mstrmain01,mstrmain02,mstrmain03,mstrmain04,\
-					mstrmain05,mstrmain06,mstrmain07,mstrmain08,mstrmain09,\
-					mstrmain10,mstrmain11,mstrmain12,mstrmain13,mstrmain14,\
-					mstrmain15
-
-const char mstrcfg0 [] PROGMEM = "MIN TEMP" ;
-const char mstrcfg1 [] PROGMEM = "MAX TEMP" ;
-const char mstrcfg2 [] PROGMEM = "TIME RAMP" ;
-const char mstrcfg3 [] PROGMEM = "TIME KEEP" ;
-# define MSTRCFG0	mstrcfg0,mstrcfg1, mstrcfg2, mstrcfg3
-
-const char * const menustrings[] PROGMEM = { MSTRGLOB , MSTRMAIN , MSTRCFG0 };
+const char * const menustrings[] PROGMEM = { MSTRMAIN } ;
 
 # define MENU_ACTION_IDLE 				0x00
 # define MENU_ACTION_NOTIMPLEMENTED		0x01
@@ -83,48 +60,23 @@ const char * const menustrings[] PROGMEM = { MSTRGLOB , MSTRMAIN , MSTRCFG0 };
 
 # define MENU_ACTION_SETTEMP			0x11
 # define MENU_ACTION_SETFAN				0x12
-# define MENU_ACTION_SETTIMER			0x13
-# define MENU_ACTION_RUN				0x14
-# define MENU_ACTION_STOP				0x15
-# define MENU_ACTION_ABOUT				0x16
+# define MENU_ACTION_RUN				0x13
+# define MENU_ACTION_STOP				0x14
+# define MENU_ACTION_ABOUT				0x15
 
-# define MENUITEM_GLOB_PARENT			0
-# define MENUITEM_MAIN_SETTEMP			1
-# define MENUITEM_MAIN_SETFAN			2
-# define MENUITEM_MAIN_SETTIMER			3
-# define MENUITEM_MAIN_RUN				4
-# define MENUITEM_MAIN_STOP				5
-# define MENUITEM_MAIN_CONFPREHEAT		6
-# define MENUITEM_MAIN_CONFREFLOW		7
-# define MENUITEM_MAIN_CONFCOOLDOWN		8
-# define MENUITEM_MAIN_LOADPRESET1		9
-# define MENUITEM_MAIN_LOADPRESET2		10
-# define MENUITEM_MAIN_LOADPRESET3		11
-# define MENUITEM_MAIN_SAVEPRESET1		12
-# define MENUITEM_MAIN_SAVEPRESET2		13
-# define MENUITEM_MAIN_SAVEPRESET3		14
-# define MENUITEM_MAIN_SETTINGS			15
-# define MENUITEM_MAIN_ABOUT			16
+# define MENUITEM_MAIN_SETTEMP			0
+# define MENUITEM_MAIN_SETFAN			1
+# define MENUITEM_MAIN_RUN				2
+# define MENUITEM_MAIN_STOP				3
+# define MENUITEM_MAIN_ABOUT			4
 
-
-const uint8_t menu_main [] PROGMEM = { MENUPAGESIZE(16) , -1
+const uint8_t menu_main [] PROGMEM = { MENUPAGESIZE(5) , -1
 // ITEM ID , STRING INDEX , ACTION INDEX , ACTION PARAM
-										, MENUITEM_MAIN_SETTEMP			, 1    , MENU_ACTION_SETTEMP        , -1
-										, MENUITEM_MAIN_SETFAN			, 2    , MENU_ACTION_SETFAN         , -1
-										, MENUITEM_MAIN_SETTIMER		, 3    , MENU_ACTION_SETTIMER       , -1
-										, MENUITEM_MAIN_RUN				, 4    , MENU_ACTION_RUN            , -1
-										, MENUITEM_MAIN_STOP			, 5    , MENU_ACTION_STOP           , -1
-										, MENUITEM_MAIN_CONFPREHEAT		, 6    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_CONFREFLOW		, 7    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_CONFCOOLDOWN	, 8    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET1		, 9    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET2		, 10    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_LOADPRESET3		, 11    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET1		, 12    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET2		, 13    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SAVEPRESET3		, 14    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_SETTINGS		, 15    , MENU_ACTION_NOTIMPLEMENTED , -1
-										, MENUITEM_MAIN_ABOUT			, 16    , MENU_ACTION_ABOUT          , -1
+										, MENUITEM_MAIN_SETTEMP			, 0    , MENU_ACTION_SETTEMP        , -1
+										, MENUITEM_MAIN_SETFAN			, 1    , MENU_ACTION_SETFAN         , -1
+										, MENUITEM_MAIN_RUN				, 2    , MENU_ACTION_RUN            , -1
+										, MENUITEM_MAIN_STOP			, 3    , MENU_ACTION_STOP           , -1
+										, MENUITEM_MAIN_ABOUT			, 4    , MENU_ACTION_ABOUT          , -1
 									} ;
 
 const uint8_t * const menupages[] PROGMEM = { menu_main } ;
